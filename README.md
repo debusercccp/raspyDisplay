@@ -2,9 +2,6 @@ TFT Monitor per Raspberry Pi
 
 Questo progetto fornisce una serie di script in Python e Bash per monitorare le statistiche di sistema di un Raspberry Pi (IP, Temperatura, Carico CPU, RAM, processi attivi) direttamente su un display TFT collegato tramite interfaccia SPI.
 
-Il sistema include una logica di autorilevamento per lanciare lo script corretto in base all'hardware rilevato al boot.
-Hardware Supportato
-
 Gli script sono stati ottimizzati e testati per due specifici pannelli TFT:
 
     Display 3.5" (Driver ILI9486 - 480x320)
@@ -54,8 +51,6 @@ dtoverlay=tft35a:rotate=90
 (Se si utilizza un driver diverso, sostituire tft35a con ili9486 o l'overlay fornito dal produttore).
 Struttura dei File
 
-    start_display.sh: Lo script Bash principale. Rileva la presenza di /dev/fb1. Se esiste, lancia lo script per il 3.5", altrimenti ripiega sul 2.8".
-
     display_35.py: Script Python per il pannello da 3.5 pollici (scrittura su Framebuffer).
 
     display_28.py: Script Python per il pannello da 2.8 pollici (gestione SPI via Luma).
@@ -81,10 +76,10 @@ After=network.target
 [Service]
 Type=simple
 User=noya
-WorkingDirectory=/home/noya/scripts
+WorkingDirectory=/home/$USER/raspyDisplay
 # Un ritardo di 5 secondi assicura che il driver del framebuffer sia caricato
 ExecStartPre=/bin/sleep 5
-ExecStart=/home/noya/scripts/start_display.sh
+ExecStart=/home/$USER/raspyDisplay/display_35.py
 Restart=always
 RestartSec=5
 
