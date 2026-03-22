@@ -45,10 +45,13 @@ def get_classic_text():
     try:
         kernel = subprocess.check_output(['uname', '-r'], timeout=2).decode().strip()
         mem_gb = subprocess.check_output("free -m | awk 'NR==2{printf \"%.1f\", $2/1024}'", shell=True).decode().strip()
-        line1 = f"     Linux Version {kernel}, Compiled #1 SMP PREEMPT Debian"
-        line2 = f"     Four 2.4GHz ARM Cortex-A76 Processors, {mem_gb}GB RAM, 432 Bogomips"
-        line3 = f"                              Github: dubusercccp"
-        return f"{line1}\n{line2}\n{line3}"
+        line1 = f"                    Linux Version {kernel}, Debian"
+        line2 = f"                    Four 2.4GHz ARM Cortex-A76 Processors, {mem_gb}GB RAM "
+        line3 = f"=================================================================================="
+        line4 = f"                    (Sicuramente non quella merda di Windows)"
+        line5 = f"                                                       Github: debusercccp"
+        
+        return f"{line1}\n{line2}\n{line3}\n{line4}\n{line5}"
     except:
         return "Linux Version Error...\n \n rasp"
 
@@ -104,6 +107,20 @@ def get_net_speed():
     except:
         return 0.0, 0.0
 
+def get_weather():
+    cities = ['Bari', 'Spinazzola', 'Bologna']
+    results = []
+    for city in cities:
+        try:
+            res = subprocess.check_output(
+                ['curl', '-s', f'wttr.in/{city}?format=%C+%t'],
+                timeout=5
+            ).decode().strip()
+            results.append(f"{city}: {res}")
+        except:
+            results.append(f"{city}: N/D")
+    return results
+
 def draw_bar(draw, x, y, w, h, pct, color_fill, color_bg=(50, 50, 50)):
     draw.rectangle([x, y, x+w, y+h], fill=color_bg)
     fill_w = int(w * pct / 100)
@@ -147,12 +164,12 @@ def render_to_fb(mode):
     draw = ImageDraw.Draw(img)
 
     try:
-        f_tiny  = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf', 10)
-        f_small = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf', 13)
-        ft      = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf', 20)
-        fs      = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf', 13)
-        f_big   = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf', 48)
-        f_med   = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf', 28)
+        f_tiny  = ImageFont.truetype('/usr/share/fonts/truetype/JetBrainsMono/JetBrainsMonoNLNerdFontMono-Thin.ttf', 10)
+        f_small = ImageFont.truetype('/usr/share/fonts/truetype/JetBrainsMono/JetBrainsMonoNLNerdFontMono-Thin.ttf', 13)
+        ft      = ImageFont.truetype('/usr/share/fonts/truetype/JetBrainsMono/JetBrainsMonoNLNerdFontMono-Thin.ttf', 20)
+        fs      = ImageFont.truetype('/usr/share/fonts/truetype/JetBrainsMono/JetBrainsMonoNLNerdFontMono-Thin.ttf', 13)
+        f_big   = ImageFont.truetype('/usr/share/fonts/truetype/JetBrainsMono/JetBrainsMonoNLNerdFontPropo-SemiBold.ttf', 48)
+        f_med   = ImageFont.truetype('/usr/share/fonts/truetype/JetBrainsMono/JetBrainsMonoNLNerdFontPropo-SemiBold.ttf', 28)
     except:
         f_tiny = ft = fs = f_big = f_med = f_small = ImageFont.load_default()
 
@@ -202,11 +219,6 @@ def render_to_fb(mode):
         draw_graph(draw, 10, 112, 220, 55, cpu_history, (0, 255, 100), f"CPU {cpu:.0f}%")
         draw_graph(draw, 10, 175, 220, 55, ram_history, (255, 100, 0), f"RAM {ram:.0f}%")
 
-        # --- BARRE CPU e RAM ---
-        draw_bar(draw, 10, 238, 220, 14, cpu, (0, 200, 80))
-        draw_bar(draw, 10, 258, 220, 14, ram, (200, 100, 0))
-        draw.text((240, 238), f"CPU {cpu:.1f}%", font=f_tiny, fill=(0, 255, 100))
-        draw.text((240, 258), f"RAM {ram:.1f}%", font=f_tiny, fill=(255, 150, 0))
 
         # --- DISCO ---
         draw.text((245, 32), "DISCO", font=fs, fill=(200, 200, 200))
@@ -227,9 +239,15 @@ def render_to_fb(mode):
         draw.text((245, 145), f"▼ {fmt_speed(rx_kb)}", font=f_small, fill=(0, 255, 150))
         draw.text((245, 168), f"▲ {fmt_speed(tx_kb)}", font=f_small, fill=(255, 80, 80))
 
-        # --- SEPARATORI ---
-        draw.line([240, 28, 240, 320], fill=(60, 60, 60))
-        draw.line([10, 108, 470, 108], fill=(60, 60, 60))
+        
+        # --- METEO ---
+        draw.line([245, 190, 465, 190], fill=(60, 60, 60))
+        draw.text((245, 193), "METEO", font=fs, fill=(200, 200, 200))
+        meteo_list = get_weather()
+        y_meteo = 210
+        for m in meteo_list:
+            draw.text((245, y_meteo), m[:28], font=f_tiny, fill=(100, 220, 255))
+            y_meteo += 14
 
     write_to_fb(img)
 
@@ -239,7 +257,7 @@ try:
     while True:
         render_to_fb(mode)
         if mode == 2:
-            time.sleep(2)  # Dashboard si aggiorna più spesso
+            time.sleep(4)  # Dashboard si aggiorna più spesso
         else:
             mode_time = 0
             while mode_time < 10:
